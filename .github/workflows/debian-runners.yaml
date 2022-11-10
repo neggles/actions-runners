@@ -7,6 +7,7 @@ on:
     paths:
       - "runner/**"
       - "!runner/Makefile"
+      - "debian/**"
       - ".github/workflows/debian-runners.yaml"
       - "!**.md"
   workflow_dispatch:
@@ -81,11 +82,12 @@ jobs:
         id: Copy
         run: |
           if [[ -d "${{ matrix.os-name }}" ]]; then
-            cp ${{ matrix.os-name }}/${{ matrix.name }}-${{ matrix.os-name }}.dockerfile ./runner/ || exit 1
+            cp ${{ matrix.os-name }}/${{ matrix.name }}-${{ env.os_version_name }}.dockerfile \
+              ./runner/${{ matrix.name }}-${{ matrix.os-name }}.dockerfile || exit 1
             echo "Using custom dockerfile from ${{ matrix.os-name }}"
           else
             # Passthrough build, rename the upstream dockerfile
-            cp runner/${{ matrix.name }}.dockerfile runner/${{ matrix.name }}-${{ matrix.os-name }}.dockerfile
+            cp runner/${{ matrix.name }}.dockerfile runner/${{ matrix.name }}-${{ matrix.os-name }}.dockerfile || exit 1
             echo "Doing passthrough build from upstream dockerfile"
           fi
 
