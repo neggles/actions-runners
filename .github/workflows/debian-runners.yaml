@@ -17,6 +17,10 @@ on:
         required: true
         default: false
 
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
@@ -28,7 +32,7 @@ env:
 
 jobs:
   build-runners:
-    name: Build ${{ matrix.name }} ${{ matrix.os-name }}-${{ matrix.os-version }}
+    name: ${{ matrix.os-name }}-${{ matrix.os-version }} ${{ matrix.name }}
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -42,13 +46,20 @@ jobs:
         include:
           - os-version: 10
             tag-latest: true
+            tag-os: true
           - os-version: 11
             tag-latest: false
+            tag-os: false
 
     steps:
       - name: Checkout
         id: checkout
         uses: actions/checkout@v3
+
+      - name: Get short SHA ref
+        id: vars
+        run: |
+          echo "sha_short=${GITHUB_SHA::8}" >> $GITHUB_ENV
 
       - name: Set build dockerfile
         id: Copy
@@ -80,6 +91,7 @@ jobs:
             ghcr.io/${{ github.repository }}/${{ matrix.name }}
           tags: |
             type=raw,value=latest,enable=${{ matrix.tag-latest }}
+            type=raw,value=${{ matrix.os-name }},enable=${{ matrix.tag-os }}
             type=raw,value=${{ matrix.os-name }}-${{ matrix.os-version }}
             type=raw,value=v${{ env.RUNNER_VERSION }}-${{ matrix.os-name }}-${{ matrix.os-version }}
             type=raw,value=v${{ env.RUNNER_VERSION }}-${{ matrix.os-name }}-${{ matrix.os-version }}-${{ env.sha_short }}
