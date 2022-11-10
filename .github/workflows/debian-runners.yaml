@@ -1,5 +1,5 @@
-name: Runners
-
+name: Debian Runner Images
+run-name: Debian Runner Build (${{ github.event_name }})
 on:
   push:
     branches:
@@ -16,6 +16,10 @@ on:
         type: boolean
         required: true
         default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   RUNNER_VERSION: 2.299.1
@@ -38,6 +42,8 @@ jobs:
         include:
           - os-version: 10
             tag-latest: true
+          - os-version: 11
+            tag-latest: false
 
     steps:
       - name: Checkout
