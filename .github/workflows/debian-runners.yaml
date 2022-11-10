@@ -61,6 +61,22 @@ jobs:
         run: |
           echo "sha_short=${GITHUB_SHA::8}" >> $GITHUB_ENV
 
+      - name: Map debian version to name
+        id: version-map
+        run: |
+          case ${{ matrix.os-version }} in
+            11)
+              echo "os_version_name=bullseye" >> $GITHUB_ENV
+              ;;
+            12)
+              echo "os_version_name=bookworm" >> $GITHUB_ENV
+              ;;
+            *)
+              echo "Unable to map '${{ matrix.os-version }}' to a release name..."
+              exit 1
+              ;;
+            esac
+
       - name: Set build dockerfile
         id: Copy
         run: |
@@ -93,6 +109,7 @@ jobs:
             type=raw,value=latest,enable=${{ matrix.tag-latest }}
             type=raw,value=${{ matrix.os-name }},enable=${{ matrix.tag-os }}
             type=raw,value=${{ matrix.os-name }}-${{ matrix.os-version }}
+            type=raw,value=${{ matrix.os-name }}-${{ env.os_version_name }}
             type=raw,value=v${{ env.RUNNER_VERSION }}-${{ matrix.os-name }}-${{ matrix.os-version }}
             type=raw,value=v${{ env.RUNNER_VERSION }}-${{ matrix.os-name }}-${{ matrix.os-version }}-${{ env.sha_short }}
 
@@ -113,7 +130,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            PARENT_IMAGE=${{ matrix.os-name }}:${{ matrix.os-version }}
+            PARENT_IMAGE=${{ matrix.os-name }}:${{ env.os_version_name }}
             RUNNER_VERSION=${{ env.RUNNER_VERSION }}
             DOCKER_VERSION=${{ env.DOCKER_VERSION }}
             RUNNER_CONTAINER_HOOKS_VERSION=${{ env.RUNNER_CONTAINER_HOOKS_VERSION }}
