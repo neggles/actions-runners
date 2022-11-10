@@ -33,22 +33,34 @@ jobs:
       fail-fast: false
       matrix:
         name: [actions-runner, actions-runner-dind]
-        os-name: [debian]
-        os-version: [10, 11]
-        tag-latest: [false]
         include:
-          - os-name: debian
-            os-version: 10
+          - os-name: ubuntu
+            os-version: "20.04"
             tag-latest: "true"
+          - os-name: debian
+            os-version: "10"
+            tag-latest: "true"
+          - os-name: debian
+            os-version: "11"
+            tag-latest: "false"
 
     steps:
       - name: Checkout
         id: checkout
         uses: actions/checkout@v3
 
-      - name: Copy custom files over upstream
+      - name: Set build dockerfile
         id: Copy
-        run: cp -a ${{ matrix.os-name }}/* runner/
+        run: |
+          custom_dockerfile='${{ matrix.os-name }}/${{ matrix.name }}.dockerfile'
+          if [[ -d "${{ matrix.os-name }}" ]]; then
+            cp "${{ matrix.os-name }}/*.dockerfile" './runner/' || exit 1
+            echo "Using custom dockerfile from ${{ matrix.os-name }}"
+          else
+            # Passthrough build, rename the upstream dockerfile
+            mv "runner/${{ matrix.name }}.dockerfile" "runner/${{ matrix.name }}-${{ matrix.os-name }}.dockerfile"
+            echo "Doing passthrough build from upstream dockerfile"
+          fi
 
       - name: Set up QEMU
         id: qemu
@@ -68,7 +80,7 @@ jobs:
             ghcr.io/${{ github.repository }}/${{ matrix.name }}
           tags: |
             type=raw,value=latest,enable=${{ matrix.tag-latest }}
-            type=raw,value=${{ matrix.os-name}}-${{ matrix.os-version }}
+            type=raw,value=${{ matrix.os-name }}-${{ matrix.os-version }}
             type=raw,value=v${{ env.RUNNER_VERSION }}-${{ matrix.os-name }}-${{ matrix.os-version }}
             type=raw,value=v${{ env.RUNNER_VERSION }}-${{ matrix.os-name }}-${{ matrix.os-version }}-${{ env.sha_short }}
 
