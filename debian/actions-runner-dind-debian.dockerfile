@@ -12,6 +12,7 @@ RUN test -n "$TARGETPLATFORM" || (echo "TARGETPLATFORM must be set" && false)
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update -y \
     && apt-get update -y \
+    && apt-get install -y software-properties-common \
     && add-apt-repository contrib \
     && add-apt-repository non-free \
     && apt-get install -y --no-install-recommends \

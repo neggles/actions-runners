@@ -33,13 +33,11 @@ jobs:
       fail-fast: false
       matrix:
         name: [actions-runner, actions-runner-dind]
+        os-name: [debian]
+        os-version: [10, 11]
         include:
-          - os-name: debian
-            os-version: 10
+          - os-version: 10
             tag-latest: true
-          - os-name: debian
-            os-version: 11
-            tag-latest: false
 
     steps:
       - name: Checkout
