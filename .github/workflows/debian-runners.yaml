@@ -1,0 +1,97 @@
+name: Runners
+
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+      - "runner/**"
+      - "!runner/Makefile"
+      - ".github/workflows/debian-runners.yaml"
+      - "!**.md"
+  workflow_dispatch:
+    inputs:
+      force-push:
+        description: "force push to GHCR"
+        type: boolean
+        required: true
+        default: false
+
+env:
+  RUNNER_VERSION: 2.299.1
+  DOCKER_VERSION: 20.10.12
+  RUNNER_CONTAINER_HOOKS_VERSION: 0.1.2
+
+jobs:
+  build-runners:
+    name: Build ${{ matrix.name }}-${{ matrix.os-name }}-${{ matrix.os-version }}
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [actions-runner, actions-runner-dind]
+        os-name: [debian]
+        os-version: [10, 11]
+        tag-latest: [false]
+        include:
+          - os-name: debian
+            os-version: 10
+            tag-latest: "${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}"
+
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v3
+
+      - name: Copy custom files over upstream
+        id: Copy
+        run: cp -a ${{ matrix.os-name }}/* runner/
+
+      - name: Set up QEMU
+        id: qemu
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}/${{ matrix.name }}-${{ matrix.os-name }}-${{ matrix.os-version }}
+          tags: |
+            type=raw,value=latest,enable=${{ matrix.tag-latest }}
+            type=raw,value=${{ matrix.os-name}}-${{ matrix.os-version }}
+            type=raw,value=v${{ env.RUNNER_VERSION }}-${{ matrix.os-name }}-${{ matrix.os-version }}
+            type=raw,value=v${{ env.RUNNER_VERSION }}-${{ matrix.os-name }}-${{ matrix.os-version }}-${{ env.sha_short }}
+
+      - name: Login to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Versioned Tags
+        uses: docker/build-push-action@v3
+        with:
+          context: ./runner
+          file: ./runner/${{ matrix.name }}-${{ matrix.os-name }}.dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || inputs.force-push }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            PARENT_IMAGE=${{ matrix.os-name }}:${{ matrix.os-version }}
+            RUNNER_VERSION=${{ env.RUNNER_VERSION }}
+            DOCKER_VERSION=${{ env.DOCKER_VERSION }}
+            RUNNER_CONTAINER_HOOKS_VERSION=${{ env.RUNNER_CONTAINER_HOOKS_VERSION }}
+          cache-from: type=gha,scope=build-${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=build-${{ matrix.name }}

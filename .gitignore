@@ -102,3 +102,9 @@ $RECYCLE.BIN/
 # local misc and temp
 /misc/
 /temp/
+
+# dockerfiles under runner/
+/runner/*.dockerfile
+!/runner/actions-runner.dockerfile
+!/runner/actions-runner-dind.dockerfile
+!/runner/actions-runner-dind-rootless.dockerfile
