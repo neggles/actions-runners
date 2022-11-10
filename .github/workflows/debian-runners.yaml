@@ -42,12 +42,12 @@ jobs:
       matrix:
         name: [actions-runner, actions-runner-dind]
         os-name: [debian]
-        os-version: [10, 11]
+        os-version: [11, 12]
         include:
-          - os-version: 10
+          - os-version: 11
             tag-latest: true
             tag-os: true
-          - os-version: 11
+          - os-version: 12
             tag-latest: false
             tag-os: false
 
