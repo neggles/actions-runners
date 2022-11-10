@@ -14,8 +14,6 @@ RUN test -n "$TARGETPLATFORM" || (echo "TARGETPLATFORM must be set" && false)
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update -y \
     && apt-get install -y software-properties-common \
-    && add-apt-repository -y ppa:git-core/ppa \
-    && apt-get update -y \
     && apt-get install -y --no-install-recommends \
     build-essential \
     curl \

@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       force-push:
-        description: "force push to GHCR"
+        description: "push to GHCR"
         type: boolean
         required: true
         default: false
@@ -24,7 +24,7 @@ env:
 
 jobs:
   build-runners:
-    name: Build ${{ matrix.name }}-${{ matrix.os-name }}-${{ matrix.os-version }}
+    name: Build ${{ matrix.name }}-${{ matrix.os-name }}
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -39,7 +39,7 @@ jobs:
         include:
           - os-name: debian
             os-version: 10
-            tag-latest: "${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}"
+            tag-latest: "true"
 
     steps:
       - name: Checkout
@@ -65,7 +65,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ghcr.io/${{ github.repository }}/${{ matrix.name }}-${{ matrix.os-name }}-${{ matrix.os-version }}
+            ghcr.io/${{ github.repository }}/${{ matrix.name }}
           tags: |
             type=raw,value=latest,enable=${{ matrix.tag-latest }}
             type=raw,value=${{ matrix.os-name}}-${{ matrix.os-version }}
