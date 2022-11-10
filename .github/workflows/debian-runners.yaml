@@ -24,7 +24,7 @@ env:
 
 jobs:
   build-runners:
-    name: Build ${{ matrix.name }}-${{ matrix.os-name }}
+    name: Build ${{ matrix.name }} ${{ matrix.os-name }}-${{ matrix.os-version }}
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -35,11 +35,11 @@ jobs:
         name: [actions-runner, actions-runner-dind]
         include:
           - os-name: debian
-            os-version: "10"
-            tag-latest: "true"
+            os-version: 10
+            tag-latest: true
           - os-name: debian
-            os-version: "11"
-            tag-latest: "false"
+            os-version: 11
+            tag-latest: false
 
     steps:
       - name: Checkout
@@ -49,13 +49,12 @@ jobs:
       - name: Set build dockerfile
         id: Copy
         run: |
-          custom_dockerfile='${{ matrix.os-name }}/${{ matrix.name }}.dockerfile'
           if [[ -d "${{ matrix.os-name }}" ]]; then
-            cp ${{ matrix.os-name }}/*.dockerfile ./runner/ || exit 1
+            cp ${{ matrix.os-name }}/${{ matrix.name }}-${{ matrix.os-name }}.dockerfile ./runner/ || exit 1
             echo "Using custom dockerfile from ${{ matrix.os-name }}"
           else
             # Passthrough build, rename the upstream dockerfile
-            mv runner/${{ matrix.name }}.dockerfile runner/${{ matrix.name }}-${{ matrix.os-name }}.dockerfile
+            cp runner/${{ matrix.name }}.dockerfile runner/${{ matrix.name }}-${{ matrix.os-name }}.dockerfile
             echo "Doing passthrough build from upstream dockerfile"
           fi
 
