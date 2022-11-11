@@ -1,11 +1,17 @@
 name: sbci ubuntu runner image
-
+run-name: sbCI Runner Build (${{ github.event_name }})
 on:
   push:
     paths:
       - "sbci/*"
       - ".github/workflows/sbci-runners.yaml"
       - "!**.md"
+  workflow_run:
+    types:
+      - completed
+    workflows:
+      - ".github/workflows/debian-runners.yaml"
+
   workflow_dispatch:
     inputs:
       force-push:
@@ -40,7 +46,7 @@ jobs:
         os-version: [12]
         include:
           - os-version: 12
-            tag-latest: false
+            tag-latest: true
             tag-os: true
     steps:
       - name: Checkout
