@@ -1,4 +1,4 @@
-name: Debian Runner Images
+name: Build Debian Runners
 run-name: Debian Runner Build (${{ github.event_name }})
 on:
   push:

@@ -1,16 +1,16 @@
-name: sbci ubuntu runner image
+name: Build sbCI Runners
 run-name: sbCI Runner Build (${{ github.event_name }})
 on:
   push:
     paths:
-      - "sbci/*"
+      - "sbci/*.dockerfile"
       - ".github/workflows/sbci-runners.yaml"
       - "!**.md"
   workflow_run:
-    types:
-      - completed
+    branches: ["main"]
+    types: [completed]
     workflows:
-      - ".github/workflows/debian-runners.yaml"
+      - "Build Debian Runners"
 
   workflow_dispatch:
     inputs:
@@ -25,7 +25,7 @@ defaults:
     shell: bash
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
