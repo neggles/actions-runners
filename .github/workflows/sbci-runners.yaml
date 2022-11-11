@@ -1,0 +1,111 @@
+name: sbci ubuntu runner image
+
+on:
+  push:
+    paths:
+      - "sbci/*"
+      - ".github/workflows/sbci-runners.yaml"
+      - "!**.md"
+  workflow_dispatch:
+    inputs:
+      force-push:
+        description: "push to GHCR"
+        type: boolean
+        required: true
+        default: false
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  autobuild: ${{ contains(github.event_name, 'push') }}
+
+jobs:
+  build:
+    name: ${{ matrix.name }} ${{ matrix.os-name }}-${{ matrix.os-version }}
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [sbci-runner]
+        os-name: [debian]
+        os-version: [12]
+        include:
+          - os-version: 12
+            tag-latest: false
+            tag-os: true
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v3
+
+      - name: Get short SHA ref
+        id: vars
+        run: |
+          echo "sha_short=${GITHUB_SHA::8}" >> $GITHUB_ENV
+
+      - name: Map debian version to name
+        id: version-map
+        run: |
+          case ${{ matrix.os-version }} in
+            11)
+              echo "os_version_name=bullseye" >> $GITHUB_ENV
+              ;;
+            12)
+              echo "os_version_name=bookworm" >> $GITHUB_ENV
+              ;;
+            *)
+              echo "Unable to map '${{ matrix.os-version }}' to a release name..."
+              exit 1
+              ;;
+            esac
+
+      - name: Set up QEMU
+        id: qemu
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}/${{ matrix.name }}
+          tags: |
+            type=raw,value=latest,enable=${{ matrix.tag-latest }}
+            type=raw,value=${{ matrix.os-name }},enable=${{ matrix.tag-os }}
+            type=raw,value=${{ matrix.os-name }}-${{ matrix.os-version }}
+            type=raw,value=${{ matrix.os-name }}-${{ env.os_version_name }}
+            type=raw,value=${{ matrix.os-name }}-${{ env.os_version_name }}--${{ env.sha_short }}
+
+      - name: Login to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Versioned Tags
+        uses: docker/build-push-action@v3
+        with:
+          context: ./sbci
+          file: ./sbci/${{ matrix.name }}.dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || inputs.force-push }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=build-${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=build-${{ matrix.name }}
