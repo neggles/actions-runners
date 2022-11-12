@@ -58,6 +58,6 @@ RUN sudo rm -rf /var/lib/apt/lists/*
 
 # debian's qemu-user-static package no longer registers binfmts
 # if running inside a virtualmachine; dockerhub builds are inside a vm
-RUN for arch in aarch64 arm armeb mips mips64 mips64el mipsel mipsn32 mipsn32el ppc ppc64 ppc64le riscv32 riscv64 s390x sh4 sh4eb sparc sparc32plus sparc64 xtensa xtensaeb; do \
+RUN for arch in aarch64 arm armeb mips mips64 mips64el mipsel mipsn32 mipsn32el ppc ppc64 ppc64le riscv32 riscv64; do \
       update-binfmts --import qemu-$arch; \
     done
