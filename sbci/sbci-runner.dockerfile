@@ -38,6 +38,7 @@ RUN sudo apt-get -yq install \
 
 # debos dependencies
 RUN sudo apt-get -yq install \
+        bmap-tools \
         gdisk \
         fdisk \
         parted \
