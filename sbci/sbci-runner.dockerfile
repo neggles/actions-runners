@@ -5,7 +5,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN sudo apt-get -yq update \
     && sudo apt-get -yq upgrade
 
-# vmdb2 & kernel dependencies etc.
+# kernel and u-boot build dependencies
 RUN sudo apt-get -yq install \
         apt-utils \
         build-essential \
@@ -14,6 +14,7 @@ RUN sudo apt-get -yq install \
         curl
 
 RUN sudo apt-get -yq install \
+        apt-transport-https \
         autoconf \
         bc \
         bison \
@@ -21,12 +22,9 @@ RUN sudo apt-get -yq install \
         cpio \
         dkms \
         kmod \
-        fakeroot \
+        pkg-config \
         quilt \
-        rsync \
-        dh-exec \
-        genisoimage \
-        myrepos
+        rsync
 
 RUN sudo apt-get -yq install \
         libssl-dev \
@@ -42,10 +40,14 @@ RUN sudo apt-get -yq install \
         gdisk \
         fdisk \
         parted \
-        pkg-config \
+        binfmt-support \
         qemu-system-x86 \
         qemu-user-static \
         qemu-utils \
+        fakeroot \
+        dh-exec \
+        genisoimage \
+        myrepos \
         pigz \
         bzip2 \
         xz-utils \
